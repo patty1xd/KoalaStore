@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><%= pkg.name %> — <%= storeName %></title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/"><span>🐨</span> <%= storeName %></a>
+      <nav><a href="/">← Back to store</a></nav>
+    </div>
+  </header>
+
+  <main class="wrap narrow">
+    <div class="card">
+      <h1><%= pkg.name %></h1>
+      <p class="muted"><%= pkg.description %></p>
+      <div class="pkg-foot">
+        <span class="price big"><%= Number(pkg.price).toFixed(2) %> <%= currency %></span>
+        <% if (pkg.duration_days > 0) { %>
+          <span class="badge"><%= pkg.duration_days %> days, then it ends</span>
+        <% } else { %>
+          <span class="badge perm">Permanent</span>
+        <% } %>
+      </div>
+
+      <label class="lbl" for="username">Your Minecraft username</label>
+      <input id="username" class="input" placeholder="Notch" autocomplete="off" />
+      <p id="msg" class="msg"></p>
+
+      <% if (!paypalReady) { %>
+        <div class="card warn">PayPal is not configured on this store yet. Set it in <code>.env</code>.</div>
+      <% } else { %>
+        <div id="paypal-buttons"></div>
+      <% } %>
+    </div>
+  </main>
+
+  <% if (paypalReady) { %>
+  <script src="https://www.paypal.com/sdk/js?client-id=<%= clientId %>&currency=<%= currency %>"></script>
+  <script>
+    (function () {
+      var pkgId = <%= pkg.id %>;
+      var input = document.getElementById('username');
+      var msg = document.getElementById('msg');
+      function valid(u){ return /^[A-Za-z0-9_]{3,16}$/.test(u); }
+      function show(t, ok){ msg.textContent = t; msg.className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+      paypal.Buttons({
+        onClick: function (data, actions) {
+          if (!valid(input.value.trim())) {
+            show('Enter a valid Minecraft username (3-16 letters/numbers/_).', false);
+            return actions.reject();
+          }
+          return actions.resolve();
+        },
+        createOrder: function () {
+          return fetch('/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ packageId: pkgId, username: input.value.trim() })
+          }).then(function (r) { return r.json().then(function(j){ if(!r.ok) throw new Error(j.error||'Error'); return j; }); })
+            .then(function (d) { return d.id; })
+            .catch(function (e) { show(e.message, false); throw e; });
+        },
+        onApprove: function (data) {
+          return fetch('/orders/' + data.orderID + '/capture', { method: 'POST' })
+            .then(function (r) { return r.json().then(function(j){ if(!r.ok) throw new Error(j.error||'Capture failed'); return j; }); })
+            .then(function () { window.location.href = '/success'; })
+            .catch(function (e) { show(e.message, false); });
+        },
+        onError: function () { show('Payment error. Please try again.', false); }
+      }).render('#paypal-buttons');
+    })();
+  </script>
+  <% } %>
+</body>
+</html>

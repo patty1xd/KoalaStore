@@ -1,1 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin — <%= storeName %></title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/"><span>🐨</span> <%= storeName %> admin</a>
+      <nav><a href="/">View store →</a></nav>
+    </div>
+  </header>
 
+  <main class="wrap">
+    <%
+      function toLines(json){ try { return (JSON.parse(json||'[]')||[]).join('\n'); } catch(e){ return ''; }
+      }
+    %>
+
+    <h2>Settings</h2>
+    <form class="card" method="post" action="/admin/settings">
+      <label class="lbl">Store name</label>
+      <input class="input" name="store_name" value="<%= storeName %>" />
+      <label class="lbl">Server name</label>
+      <input class="input" name="server_name" value="<%= serverName %>" />
+      <button class="btn" type="submit">Save</button>
+    </form>
+
+    <div class="card">
+      <label class="lbl">Server secret (paste into the plugin: <code>/koalastore secret &lt;key&gt;</code>)</label>
+      <code class="secret"><%= secret %></code>
+      <form method="post" action="/admin/secret/regen" onsubmit="return confirm('Regenerate? The plugin will stop working until you update it.')">
+        <button class="btn danger" type="submit">Regenerate</button>
+      </form>
+    </div>
+
+    <h2>Packages</h2>
+    <div class="grid">
+      <% packages.forEach(function(p){ %>
+        <form class="card" method="post" action="/admin/package">
+          <input type="hidden" name="id" value="<%= p.id %>" />
+          <label class="lbl">Name</label>
+          <input class="input" name="name" value="<%= p.name %>" />
+          <label class="lbl">Description</label>
+          <input class="input" name="description" value="<%= p.description %>" />
+          <div class="row">
+            <div><label class="lbl">Price</label><input class="input" name="price" value="<%= p.price %>" /></div>
+            <div><label class="lbl">Duration (days, 0=permanent)</label><input class="input" name="duration_days" value="<%= p.duration_days %>" /></div>
+          </div>
+          <label class="lbl">Image URL</label>
+          <input class="input" name="image" value="<%= p.image %>" />
+          <label class="lbl">Purchase commands (one per line — {name} {uuid})</label>
+          <textarea class="input" name="commands" rows="3"><%= toLines(p.commands) %></textarea>
+          <label class="lbl">Expiry commands (run when the plan ends)</label>
+          <textarea class="input" name="expiry_commands" rows="2"><%= toLines(p.expiry_commands) %></textarea>
+          <div class="row">
+            <label><input type="checkbox" name="require_online" <%= p.require_online ? 'checked' : '' %> /> Require player online</label>
+            <label><input type="checkbox" name="enabled" <%= p.enabled ? 'checked' : '' %> /> Enabled</label>
+            <div><label class="lbl">Sort</label><input class="input small" name="sort" value="<%= p.sort %>" /></div>
+          </div>
+          <div class="row">
+            <button class="btn" type="submit">Save</button>
+            <button class="btn danger" formaction="/admin/package/<%= p.id %>/delete" formmethod="post" onclick="return confirm('Delete this package?')">Delete</button>
+          </div>
+        </form>
+      <% }); %>
+
+      <form class="card add" method="post" action="/admin/package">
+        <h3>+ New package</h3>
+        <label class="lbl">Name</label>
+        <input class="input" name="name" placeholder="VIP Rank" />
+        <label class="lbl">Description</label>
+        <input class="input" name="description" placeholder="Fly, kits and more" />
+        <div class="row">
+          <div><label class="lbl">Price</label><input class="input" name="price" value="5.00" /></div>
+          <div><label class="lbl">Duration (days)</label><input class="input" name="duration_days" value="0" /></div>
+        </div>
+        <label class="lbl">Purchase commands (one per line)</label>
+        <textarea class="input" name="commands" rows="3" placeholder="lp user {name} parent add vip&#10;broadcast {name} bought VIP!"></textarea>
+        <label class="lbl">Expiry commands</label>
+        <textarea class="input" name="expiry_commands" rows="2" placeholder="lp user {name} parent remove vip"></textarea>
+        <div class="row">
+          <label><input type="checkbox" name="require_online" /> Require online</label>
+          <label><input type="checkbox" name="enabled" checked /> Enabled</label>
+        </div>
+        <button class="btn" type="submit">Create</button>
+      </form>
+    </div>
+
+    <h2>Recent payments</h2>
+    <div class="card">
+      <table>
+        <tr><th>#</th><th>Player</th><th>Amount</th><th>Status</th><th>Order</th><th></th></tr>
+        <% payments.forEach(function(p){ %>
+          <tr>
+            <td><%= p.id %></td>
+            <td><%= p.username %></td>
+            <td><%= Number(p.amount).toFixed(2) %> <%= p.currency %></td>
+            <td><span class="tag <%= p.status %>"><%= p.status %></span></td>
+            <td class="mono"><%= p.paypal_order_id || '-' %></td>
+            <td>
+              <% if (p.status !== 'completed') { %>
+                <form method="post" action="/admin/payment/<%= p.id %>/deliver" class="inline">
+                  <button class="btn small" type="submit">Mark paid</button>
+                </form>
+              <% } else { %>
+                <form method="post" action="/admin/payment/<%= p.id %>/refund" class="inline">
+                  <button class="btn small danger" type="submit">Refund</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+      </table>
+    </div>
+
+    <h2>Subscriptions</h2>
+    <div class="card">
+      <table>
+        <tr><th>#</th><th>Player</th><th>Pkg</th><th>Expires</th><th>State</th><th></th></tr>
+        <% subs.forEach(function(s){ %>
+          <tr>
+            <td><%= s.id %></td>
+            <td><%= s.username %></td>
+            <td><%= s.package_id %></td>
+            <td><%= new Date(s.expires_at*1000).toISOString().slice(0,16).replace('T',' ') %></td>
+            <td><span class="tag <%= s.state %>"><%= s.state %></span></td>
+            <td>
+              <% if (s.state === 'active') { %>
+                <form method="post" action="/admin/subscription/<%= s.id %>/expire" class="inline">
+                  <button class="btn small danger" type="submit">End now</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+      </table>
+    </div>
+  </main>
+</body>
+</html>

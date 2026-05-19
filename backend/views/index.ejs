@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><%= storeName %> — Store</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/"><span>🐨</span> <%= storeName %></a>
+      <nav>Secure checkout via PayPal</nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1>Store</h1>
+    <p class="muted">Pick a package, enter your Minecraft username, and pay. Rewards are delivered in‑game automatically.</p>
+
+    <% if (packages.length === 0) { %>
+      <div class="card empty">No packages yet. Add some in the <a href="/admin">admin panel</a>.</div>
+    <% } %>
+
+    <div class="grid">
+      <% packages.forEach(function(p){ %>
+        <a class="card pkg" href="/package/<%= p.id %>">
+          <% if (p.image) { %><img src="<%= p.image %>" alt="" class="pkg-img" /><% } %>
+          <h3><%= p.name %></h3>
+          <p class="muted desc"><%= p.description %></p>
+          <div class="pkg-foot">
+            <span class="price"><%= Number(p.price).toFixed(2) %></span>
+            <% if (p.duration_days > 0) { %>
+              <span class="badge"><%= p.duration_days %> days</span>
+            <% } else { %>
+              <span class="badge perm">Permanent</span>
+            <% } %>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+  </main>
+
+  <footer class="wrap muted">
+    Powered by KoalaStore — self-hosted.
+  </footer>
+</body>
+</html>

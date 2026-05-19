@@ -1,0 +1,19 @@
+{
+  "name": "koalastore-backend",
+  "version": "1.0.0",
+  "description": "Self-hosted Tebex-style web store backend for the KoalaStore Paper plugin",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seed.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.21.0"
+  }
+}

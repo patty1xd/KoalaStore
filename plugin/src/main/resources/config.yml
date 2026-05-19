@@ -1,1 +1,42 @@
+# ===========================================================
+#  KoalaStore - self-hosted Tebex-style web store
+# ===========================================================
+# 1. Deploy the backend (see backend/ + README.md) on your domain.
+# 2. In the admin panel, copy your server SECRET.
+# 3. Put the backend URL + secret below (or use /koalastore secret <key>).
+# ===========================================================
 
+api:
+  # Base URL of your KoalaStore backend, NO trailing slash.
+  # Example: https://store.yourdomain.com
+  url: "https://store.example.com"
+
+  # Per-server secret key from the admin panel.
+  # Keep this private. Anyone with it can run commands on your server.
+  secret: "CHANGE-ME"
+
+# How often (seconds) to poll the backend for pending purchases.
+# The backend can also tell the plugin to check sooner when there is a
+# backlog (Tebex-style "more" flag). Minimum 15.
+check-interval-seconds: 60
+
+# Commands are run from console. These placeholders are replaced:
+#   {name} / {username}  -> the buyer's Minecraft name
+#   {uuid}               -> the buyer's UUID (if known, else name)
+# "Online" commands wait until the player is on the server.
+# "Offline" commands run immediately regardless.
+
+# /buy command output
+buy:
+  message:
+    - "&8&m                                        "
+    - "&b&lKoalaStore"
+    - "&7Support the server and get rewards:"
+    - "&f&n{url}"
+    - "&8&m                                        "
+
+# Shown by /buy and /koalastore info
+store-url: "https://store.example.com"
+
+# Log every executed command to console (useful while testing).
+debug: false

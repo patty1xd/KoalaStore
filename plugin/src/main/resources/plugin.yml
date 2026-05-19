@@ -1,0 +1,27 @@
+name: KoalaStore
+version: 1.0.0
+main: com.koalastore.KoalaStorePlugin
+api-version: '1.21'
+author: KoalaStore
+description: Self-hosted Tebex-style web store integration for Paper servers.
+folia-supported: false
+
+commands:
+  koalastore:
+    description: KoalaStore admin command
+    usage: /koalastore <forcecheck|secret|url|info|reload>
+    aliases: [kstore, ks]
+    permission: koalastore.admin
+  buy:
+    description: Show the web store link
+    usage: /buy
+    aliases: [store, shop]
+    permission: koalastore.buy
+
+permissions:
+  koalastore.admin:
+    description: Manage KoalaStore
+    default: op
+  koalastore.buy:
+    description: Use /buy
+    default: true
